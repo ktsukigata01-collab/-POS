@@ -163,18 +163,36 @@ function sendToSheets(tx) {
       shop:item.shop||"", productName:item.name, qty:item.qty, attr:tx.attr||"", comment:tx.comment||""
     }));
     const payload=JSON.stringify({items});
-    // Use hidden iframe + form to bypass CORS
-    let iframe=document.getElementById('gas-iframe');
-    if(!iframe){iframe=document.createElement('iframe');iframe.id='gas-iframe';iframe.name='gas-iframe';iframe.style.display='none';document.body.appendChild(iframe);}
-    const form=document.createElement('form');
-    form.method='POST';form.action=state.gasUrl;form.target='gas-iframe';form.style.display='none';
-    const input=document.createElement('input');input.type='hidden';input.name='data';input.value=payload;
-    form.appendChild(input);document.body.appendChild(form);form.submit();document.body.removeChild(form);
-    // Assume success after short delay (iframe form doesn't return status)
-    setTimeout(()=>{setState({syncStatus:"ok"});setTimeout(()=>setState({syncStatus:null}),3000);},1500);
+    // 方法1: fetchで送信
+    fetch(state.gasUrl, {
+      method:"POST", mode:"no-cors",
+      headers:{"Content-Type":"application/x-www-form-urlencoded"},
+      body:"data="+encodeURIComponent(payload)
+    }).then(function(){
+      setState({syncStatus:"ok"});
+      setTimeout(function(){setState({syncStatus:null});},3000);
+    }).catch(function(){
+      // 方法1が失敗したら方法2: iframe+formで送信
+      sendViaForm(payload);
+    });
   } catch(err) {
     setState({syncStatus:"error"});
-    setTimeout(()=>setState({syncStatus:null}),5000);
+    setTimeout(function(){setState({syncStatus:null});},5000);
+  }
+}
+
+function sendViaForm(payload) {
+  try {
+    var iframe=document.getElementById('gas-iframe');
+    if(!iframe){iframe=document.createElement('iframe');iframe.id='gas-iframe';iframe.name='gas-iframe';iframe.style.display='none';document.body.appendChild(iframe);}
+    var form=document.createElement('form');
+    form.method='POST';form.action=state.gasUrl;form.target='gas-iframe';form.style.display='none';
+    var input=document.createElement('input');input.type='hidden';input.name='data';input.value=payload;
+    form.appendChild(input);document.body.appendChild(form);form.submit();document.body.removeChild(form);
+    setTimeout(function(){setState({syncStatus:"ok"});setTimeout(function(){setState({syncStatus:null});},3000);},1500);
+  } catch(err) {
+    setState({syncStatus:"error"});
+    setTimeout(function(){setState({syncStatus:null});},5000);
   }
 }
 
@@ -344,19 +362,21 @@ function render() {
       </div>
       <div style="margin-bottom:16px">
         <div style="font-size:12px;color:var(--dim);margin-bottom:4px">お預かり金額</div>
-        <input type="number" inputmode="numeric" value="${state.received}" oninput="setState({received:this.value})"
-          placeholder="金額を入力" autofocus
+        <input id="recv-input" type="number" inputmode="numeric" value="${state.received}" oninput="updateReceived(this.value)"
+          placeholder="金額を入力"
           style="width:100%;background:var(--card);color:var(--text);border:2px solid ${receivedNum>=total?'var(--accent)':'var(--border)'};
           border-radius:12px;padding:14px 16px;font-size:24px;font-weight:700;text-align:right">
       </div>
+      <div id="change-display">
       ${receivedNum>0?`<div style="background:${change>=0?'linear-gradient(135deg,#0a2a20,#0a3025)':'linear-gradient(135deg,#2a1a1a,#301a1a)'};
         border-radius:12px;padding:20px;text-align:center;margin-bottom:16px;border:1px solid ${change>=0?'#1a4a3a':'#4a1a1a'}">
         <div style="font-size:13px;color:${change>=0?'var(--accent)':'var(--danger)'};margin-bottom:4px">${change>=0?'おつり':'不足'}</div>
         <div style="font-size:32px;font-weight:800;color:${change>=0?'var(--success)':'var(--danger)'}">¥${fmt(Math.abs(change))}</div>
       </div>`:''}
+      </div>
       <div style="display:flex;gap:8px">
         <button class="secondary-btn" style="flex:1" onclick="setState({view:'cart'})">戻る</button>
-        <button class="pay-btn" style="flex:2" ${receivedNum>=total?`onclick="completeSale()"`:'disabled'}>会計完了</button>
+        <button id="complete-btn" class="pay-btn" style="flex:2;opacity:${receivedNum>=total?1:0.4};cursor:${receivedNum>=total?'pointer':'not-allowed'}" ${receivedNum>=total?`onclick="completeSale()"`:'disabled'}>会計完了</button>
       </div>
     </div>`;
   }
@@ -412,6 +432,40 @@ function render() {
   </div>`;
 
   app.innerHTML=html;
+
+  // Pay画面のinputフォーカスを復元
+  if(state.view==='pay') {
+    var inp=document.getElementById('recv-input');
+    if(inp) { inp.focus(); var len=inp.value.length; inp.setSelectionRange(len,len); }
+  }
+}
+
+// 収受金額の更新（フォーカスを失わないように部分更新）
+function updateReceived(val) {
+  state.received = val;
+  var receivedNum = parseInt(val) || 0;
+  var total = getTotal();
+  var change = receivedNum - total;
+  // おつり表示を部分更新
+  var changeDiv = document.getElementById('change-display');
+  if(changeDiv) {
+    if(receivedNum > 0) {
+      changeDiv.innerHTML = `<div style="background:${change>=0?'linear-gradient(135deg,#0a2a20,#0a3025)':'linear-gradient(135deg,#2a1a1a,#301a1a)'};
+        border-radius:12px;padding:20px;text-align:center;margin-bottom:16px;border:1px solid ${change>=0?'#1a4a3a':'#4a1a1a'}">
+        <div style="font-size:13px;color:${change>=0?'var(--accent)':'var(--danger)'};margin-bottom:4px">${change>=0?'おつり':'不足'}</div>
+        <div style="font-size:32px;font-weight:800;color:${change>=0?'var(--success)':'var(--danger)'}">¥${fmt(Math.abs(change))}</div>
+      </div>`;
+    } else { changeDiv.innerHTML = ''; }
+  }
+  // ボタン状態更新
+  var payBtn = document.getElementById('complete-btn');
+  if(payBtn) {
+    if(receivedNum >= total) { payBtn.disabled=false; payBtn.style.opacity='1'; payBtn.style.cursor='pointer'; payBtn.onclick=function(){completeSale();}; }
+    else { payBtn.disabled=true; payBtn.style.opacity='0.4'; payBtn.style.cursor='not-allowed'; payBtn.onclick=null; }
+  }
+  // 入力欄のボーダー色更新
+  var inp = document.getElementById('recv-input');
+  if(inp) inp.style.borderColor = receivedNum>=total ? 'var(--accent)' : 'var(--border)';
 }
 
 render();

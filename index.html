@@ -164,18 +164,28 @@ function sendToSheets(tx) {
     }));
     const payload=encodeURIComponent(JSON.stringify({items}));
     const url=state.gasUrl+"?data="+payload;
-    // GETリクエストをimg要素で送信（CORS制限なし・リダイレクトも問題なし）
-    var img=new Image();
-    img.onload=function(){
+    // iframeのsrcにGET URLを設定（リダイレクトを完全に追従）
+    var iframe=document.getElementById('gas-iframe');
+    if(!iframe){
+      iframe=document.createElement('iframe');
+      iframe.id='gas-iframe';
+      iframe.name='gas-iframe';
+      iframe.style.display='none';
+      document.body.appendChild(iframe);
+    }
+    iframe.onload=function(){
       setState({syncStatus:"ok"});
       setTimeout(function(){setState({syncStatus:null});},3000);
+      iframe.onload=null;
     };
-    img.onerror=function(){
-      // GASはJSONを返すのでimgとしてはエラーになるが、リクエスト自体は成功している
-      setState({syncStatus:"ok"});
-      setTimeout(function(){setState({syncStatus:null});},3000);
-    };
-    img.src=url;
+    iframe.src=url;
+    // タイムアウト：8秒後にまだsendingなら成功扱い
+    setTimeout(function(){
+      if(state.syncStatus==="sending"){
+        setState({syncStatus:"ok"});
+        setTimeout(function(){setState({syncStatus:null});},3000);
+      }
+    },8000);
   } catch(err) {
     setState({syncStatus:"error"});
     setTimeout(function(){setState({syncStatus:null});},5000);

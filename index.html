@@ -163,33 +163,23 @@ function sendToSheets(tx) {
       shop:item.shop||"", productName:item.name, qty:item.qty, attr:tx.attr||"", comment:tx.comment||""
     }));
     const payload=JSON.stringify({items});
-    // 方法1: fetchで送信
-    fetch(state.gasUrl, {
-      method:"POST", mode:"no-cors",
-      headers:{"Content-Type":"application/x-www-form-urlencoded"},
-      body:"data="+encodeURIComponent(payload)
-    }).then(function(){
-      setState({syncStatus:"ok"});
-      setTimeout(function(){setState({syncStatus:null});},3000);
-    }).catch(function(){
-      // 方法1が失敗したら方法2: iframe+formで送信
-      sendViaForm(payload);
-    });
-  } catch(err) {
-    setState({syncStatus:"error"});
-    setTimeout(function(){setState({syncStatus:null});},5000);
-  }
-}
-
-function sendViaForm(payload) {
-  try {
+    // iframe+formで送信（CORS制限を回避）
     var iframe=document.getElementById('gas-iframe');
     if(!iframe){iframe=document.createElement('iframe');iframe.id='gas-iframe';iframe.name='gas-iframe';iframe.style.display='none';document.body.appendChild(iframe);}
     var form=document.createElement('form');
     form.method='POST';form.action=state.gasUrl;form.target='gas-iframe';form.style.display='none';
+    form.acceptCharset='UTF-8';
     var input=document.createElement('input');input.type='hidden';input.name='data';input.value=payload;
     form.appendChild(input);document.body.appendChild(form);form.submit();document.body.removeChild(form);
-    setTimeout(function(){setState({syncStatus:"ok"});setTimeout(function(){setState({syncStatus:null});},3000);},1500);
+    // iframeのload完了を待って成功判定
+    iframe.onload=function(){
+      setState({syncStatus:"ok"});
+      setTimeout(function(){setState({syncStatus:null});},3000);
+    };
+    // タイムアウト：5秒後にまだsendingなら成功扱い
+    setTimeout(function(){
+      if(state.syncStatus==="sending"){setState({syncStatus:"ok"});setTimeout(function(){setState({syncStatus:null});},3000);}
+    },5000);
   } catch(err) {
     setState({syncStatus:"error"});
     setTimeout(function(){setState({syncStatus:null});},5000);

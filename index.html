@@ -78,31 +78,40 @@ select { background:var(--card); color:var(--text); border:1px solid var(--borde
 <script>
 // ── Data ──
 const PRODUCTS = [
-  {id:1,name:"コーヒー(H)",price:350,cost:80,cat:"飲料",type:"自社仕入"},
-  {id:2,name:"コーヒー(I)",price:380,cost:90,cat:"飲料",type:"自社仕入"},
-  {id:3,name:"カフェラテ",price:420,cost:100,cat:"飲料",type:"自社仕入"},
-  {id:4,name:"オレンジJ",price:300,cost:60,cat:"飲料",type:"自社仕入"},
-  {id:5,name:"カレーパン",price:250,cost:70,cat:"パン",type:"自社仕入"},
-  {id:6,name:"メロンパン",price:200,cost:50,cat:"パン",type:"自社仕入"},
-  {id:7,name:"サンドイッチ",price:400,cost:120,cat:"フード",type:"自社仕入"},
-  {id:8,name:"ホットドッグ",price:350,cost:100,cat:"フード",type:"自社仕入"},
-  {id:9,name:"焼きそば",price:350,cost:80,cat:"フード",type:"自社仕入"},
-  {id:10,name:"たこ焼き",price:300,cost:60,cat:"フード",type:"自社仕入"},
-  {id:11,name:"かき氷",price:300,cost:30,cat:"デザート",type:"自社仕入"},
-  {id:12,name:"クレープ",price:350,cost:80,cat:"デザート",type:"自社仕入"},
-  {id:13,name:"ワッフル",price:300,cost:70,cat:"デザート",type:"自社仕入"},
-  {id:14,name:"ポテト",price:250,cost:50,cat:"サイド",type:"自社仕入"},
-  {id:15,name:"唐揚げ",price:350,cost:90,cat:"サイド",type:"自社仕入"},
-  {id:16,name:"焼き鳥",price:200,cost:60,cat:"サイド",type:"自社仕入"},
-  {id:101,name:"日替弁当(さくら)",price:500,cost:0,cat:"弁当",type:"委託販売",shop:"和食 さくら"},
-  {id:102,name:"パスタ弁当(もみじ)",price:600,cost:0,cat:"弁当",type:"委託販売",shop:"カフェ もみじ"},
-  {id:103,name:"中華弁当(たんぽぽ)",price:550,cost:0,cat:"弁当",type:"委託販売",shop:"中華 たんぽぽ"},
-  {id:104,name:"幕の内(さくら)",price:700,cost:0,cat:"弁当",type:"委託販売",shop:"和食 さくら"},
+  {id:1,name:"トイレットペーパー(シングル18ロール)",price:1100,cost:1100,cat:"雑貨",type:"自社仕入"},
+  {id:2,name:"トイレットペーパー(ダブル18ロール)",price:1100,cost:1100,cat:"雑貨",type:"自社仕入"},
+  {id:3,name:"BOXティッシュ（5箱入り）",price:620,cost:620,cat:"雑貨",type:"自社仕入"},
+  {id:4,name:"こわれ煎餅",price:250,cost:250,cat:"お菓子",type:"自社仕入"},
+  {id:5,name:"厚焼きピーナッツこわれ煎餅",price:250,cost:250,cat:"お菓子",type:"自社仕入"},
+  {id:6,name:"ごまちーず煎餅",price:250,cost:250,cat:"お菓子",type:"自社仕入"},
+  {id:7,name:"うす焼きこわれ煎餅",price:250,cost:250,cat:"お菓子",type:"自社仕入"},
+  {id:8,name:"うす焼きこわれピーナッツ煎餅",price:250,cost:250,cat:"お菓子",type:"自社仕入"},
+  {id:9,name:"はね出し海苔",price:550,cost:550,cat:"食品",type:"自社仕入"},
+  {id:10,name:"島田うどん",price:300,cost:300,cat:"食品",type:"自社仕入"},
+  {id:11,name:"カレーせんべい",price:700,cost:700,cat:"お菓子",type:"自社仕入"},
+  {id:12,name:"いわきあられ",price:450,cost:450,cat:"お菓子",type:"自社仕入"},
+  {id:13,name:"羊かん",price:1200,cost:1200,cat:"お菓子",type:"自社仕入"},
+  {id:14,name:"ほうれん草",price:170,cost:170,cat:"野菜",type:"自社仕入"},
+  {id:15,name:"ねぎ",price:160,cost:160,cat:"野菜",type:"自社仕入"},
+  {id:16,name:"小松菜",price:140,cost:140,cat:"野菜",type:"自社仕入"},
+  {id:17,name:"しいたけ",price:260,cost:260,cat:"野菜",type:"自社仕入"},
+  {id:18,name:"たらの芽",price:250,cost:250,cat:"野菜",type:"自社仕入"},
+  {id:19,name:"ミニトマト",price:380,cost:380,cat:"野菜",type:"自社仕入"},
+  {id:20,name:"トマト",price:150,cost:150,cat:"野菜",type:"自社仕入"},
+  {id:21,name:"切干大根",price:360,cost:360,cat:"野菜",type:"自社仕入"},
+  {id:22,name:"くるみ",price:900,cost:900,cat:"野菜",type:"自社仕入"},
+  {id:23,name:"乾燥しいたけ",price:550,cost:550,cat:"野菜",type:"自社仕入"},
+  {id:101,name:"ぶり塩焼き弁当",price:850,cost:750,cat:"弁当",type:"委託販売",shop:"けんぽ"},
+  {id:102,name:"鮭塩焼き弁当",price:850,cost:750,cat:"弁当",type:"委託販売",shop:"けんぽ"},
+  {id:103,name:"生姜焼き弁当",price:950,cost:850,cat:"弁当",type:"委託販売",shop:"男のばんごはん"},
+  {id:104,name:"オムライス",price:800,cost:700,cat:"惣菜",type:"委託販売",shop:"男のばんごはん"},
+  {id:105,name:"唐揚げ",price:400,cost:300,cat:"惣菜",type:"委託販売",shop:"男のばんごはん"},
+  {id:106,name:"エビフライ",price:400,cost:300,cat:"惣菜",type:"委託販売",shop:"男のばんごはん"},
 ];
 const COMMISSION=100;
 const LOCATIONS=["貫井けやきけ公園","東町シナノキ公園","商業施設A","オフィス街B","マルシェ会場"];
 const ATTRS=["","10代","20代男性","20代女性","30代男性","30代女性","40代男性","40代女性","50代男性","50代女性","60代以上"];
-const CATEGORIES=["全て","飲料","パン","フード","デザート","サイド","弁当"];
+const CATEGORIES=["全て","雑貨","お菓子","食品","野菜","弁当","惣菜"];
 const fmt=n=>n.toLocaleString("ja-JP");
 
 // ── State ──
